@@ -7,9 +7,6 @@ export let deploy = {
 
   async start ({cloudformation}) {
 
-    // copy the role into a new separated role
-    cloudformation.Resources.PrivateBucketRole = {...cloudformation.Resources.Role}
-
     // defines a private bucket with loose acls for signed uploads
     cloudformation.Resources.PrivateBucket = {
       Type: 'AWS::S3::Bucket',
@@ -30,12 +27,7 @@ export let deploy = {
               SSEAlgorithm: 'AES256'
             }
           }]
-        },
-        /*
-        LambdaConfiguration: {
-          Event: 's3:ObjectCreated:*',
-          Function: { Ref: 'PrivateBucketLambda' }
-        }*/
+        }
       }
     }
 
@@ -60,12 +52,19 @@ export let deploy = {
             "arn:aws:iam::${AWS::AccountId}:role/${roleName}",
             {
               roleName: {
-                Ref: "PrivateBucketRole"
+                Ref: "Role"
               }
             }
           ]
         },
-        Environment: {Variables: {}},
+        Environment: {
+          Variables: {}
+        },
+        Policies: [{ 
+          S3FullAccessPolicy: {
+            BucketName: { Ref: 'PrivateBucket' }
+          }
+        }],
         Events: {
           PrivateBucketEvent: {
             Type: "S3",
@@ -85,14 +84,15 @@ export let deploy = {
         Action: 'lambda:InvokeFunction',
         FunctionName: { Ref: 'PrivateBucketLambda' },
         Principal: 's3.amazonaws.com',
-        SourceArn: {'Fn::GetAtt': ['PrivateBucket', 'Arn']}
+        SourceArn: {'Fn::GetAtt': ['PrivateBucket', 'Arn']},
+        SourceAccount: {'Fn::Sub': '${AWS::AccountId}'}
       }
     }
 
     // ensure all Lambda functions in this stack can access the private bucket
     cloudformation.Resources.PrivateBucketPolicy = {
       Type: 'AWS::IAM::Policy',
-      DependsOn: 'Role',
+      // DependsOn: 'PrivateBucketRole',
       Properties: {
         PolicyName: 'PrivateBucketPolicy',
         PolicyDocument: {
@@ -111,12 +111,29 @@ export let deploy = {
       }
     }
 
+    // Add name to SSM params for runtime discovery
+    /*
+    cloudformation.Resources.PrivateBucketParam = {
+      Type: 'AWS::SSM::Parameter',
+      Properties: {
+        Type: 'String',
+        Name: {
+          'Fn::Sub': [
+            '/${AWS::StackName}/private-bucket/${bucket}',
+            { bucket }
+          ]
+        },
+        Value: { Ref: 'PrivateBucket' }
+      }
+    }*/
+
     // add PRIVATE_BUCKET env var for runtime discovery
+    /*
     for (let resource of Object.keys(cloudformation.Resources)) {
       if (cloudformation.Resources[resource].Type === 'AWS::Serverless::Function') {
         cloudformation.Resources[resource].Properties.Environment.Variables.PRIVATE_BUCKET = { Ref: 'PrivateBucket' }
       }
-    }
+    }*/
 
     // console.log(JSON.stringify(cloudformation, null, 2))
     return cloudformation

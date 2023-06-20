@@ -4,7 +4,8 @@ import { customAlphabet } from 'nanoid'
 const nanoid = customAlphabet('1234567890ABCDEFGHJKLMNOPQRSTUVWXYZ', 6)
 
 export default function s3form ({ html, state }) {
-  let action = `https://${ process.env.PRIVATE_BUCKET }.s3.${process.env.AWS_REGION}.amazonaws.com/`
+  let bukkit = 'beginappstaging-privatebucket-1fmhvc535fslv' || process.env.PRIVATE_BUCKET
+  let action = `https://${ bukkit }.s3.${process.env.AWS_REGION}.amazonaws.com/`
   let key = `raw/${nanoid()}.har` 
   let redirect = process.env.OWNER_REDIRECT
   let accessKey = process.env.OWNER_KEY
@@ -12,7 +13,7 @@ export default function s3form ({ html, state }) {
   let policy = Buffer.from(JSON.stringify({ 
     expiration: new Date(Date.now() + 600000).toISOString(),
     conditions: [
-      {"bucket": process.env.PRIVATE_BUCKET},
+      {"bucket": bukkit },
       ["starts-with", "$key", 'raw'],
       {"acl": "public-read"},
       {"success_action_redirect": redirect},
