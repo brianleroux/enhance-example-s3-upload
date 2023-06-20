@@ -5,7 +5,7 @@ const dirname = path.dirname(fileURLToPath(import.meta.url))
 
 export let deploy = {
 
-  async start ({cloudformation}) {
+  async start ({ cloudformation, stage }) {
 
     // defines a private bucket with loose acls for signed uploads
     cloudformation.Resources.PrivateBucket = {
@@ -58,7 +58,15 @@ export let deploy = {
           ]
         },
         Environment: {
-          Variables: {}
+          Variables: {
+            "ARC_ENV": stage,
+            "ARC_STACK_NAME": {
+              "Ref": "AWS::StackName"
+            },
+            "ARC_STATIC_BUCKET": {
+              "Ref": "StaticBucket"
+            }
+          }
         },
         Policies: [{ 
           S3FullAccessPolicy: {
