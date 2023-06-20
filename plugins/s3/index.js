@@ -112,28 +112,16 @@ export let deploy = {
     }
 
     // Add name to SSM params for runtime discovery
-    /*
     cloudformation.Resources.PrivateBucketParam = {
       Type: 'AWS::SSM::Parameter',
       Properties: {
         Type: 'String',
         Name: {
-          'Fn::Sub': [
-            '/${AWS::StackName}/private-bucket/${bucket}',
-            { bucket }
-          ]
+          'Fn::Sub': ['/${AWS::StackName}/upload/bucket', {}]
         },
         Value: { Ref: 'PrivateBucket' }
       }
-    }*/
-
-    // add PRIVATE_BUCKET env var for runtime discovery
-    /*
-    for (let resource of Object.keys(cloudformation.Resources)) {
-      if (cloudformation.Resources[resource].Type === 'AWS::Serverless::Function') {
-        cloudformation.Resources[resource].Properties.Environment.Variables.PRIVATE_BUCKET = { Ref: 'PrivateBucket' }
-      }
-    }*/
+    }
 
     // console.log(JSON.stringify(cloudformation, null, 2))
     return cloudformation

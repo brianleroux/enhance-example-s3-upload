@@ -7,4 +7,3 @@ export async function get (req) {
   let html = trace.html || 'Still processing; refresh in a few seconds'
   return { json: { html } }
 }
-

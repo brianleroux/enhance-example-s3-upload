@@ -4,7 +4,9 @@ import { customAlphabet } from 'nanoid'
 const nanoid = customAlphabet('1234567890ABCDEFGHJKLMNOPQRSTUVWXYZ', 6)
 
 export default function s3form ({ html, state }) {
-  let bukkit = 'beginappstaging-privatebucket-1fmhvc535fslv' || process.env.PRIVATE_BUCKET
+
+  // create a policy
+  let bukkit = state.store.bucket
   let action = `https://${ bukkit }.s3.${process.env.AWS_REGION}.amazonaws.com/`
   let key = `raw/${nanoid()}.har` 
   let redirect = process.env.OWNER_REDIRECT
@@ -20,8 +22,12 @@ export default function s3form ({ html, state }) {
       ["starts-with", "$Content-Type", "application/"]
     ]
   })).toString('base64')
+
+  // sign the policy
   let sig = crypto.createHmac('sha1', secret).update(policy).digest('base64')
-  return `
+
+  // render the form
+  return html`
     <form action="${action}" method=post enctype=multipart/form-data>
       <input type=hidden name=key value="${key}">
       <input type=hidden name=acl value=public-read>
@@ -33,5 +39,6 @@ export default function s3form ({ html, state }) {
       <input type=file name=file>
       <button>Upload</button>
     </form>
+    <!-- <debug-element></debug-element> -->
   `
 }
